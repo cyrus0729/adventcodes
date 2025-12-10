@@ -2,6 +2,7 @@ import os
 import re
 
 import numpy as np
+from z3 import z3
 
 txt = open(f"{os.getcwd()}/data.txt").readlines()
 
@@ -16,9 +17,17 @@ def largestNumber(in_str):
 
 # parse input
 for x in txt:
-    goal_states.append(re.search(r"\[(.*?)\]", x).group(1))
+    goal_states.append([v for v in re.search(r"\[(.*?)\]", x).group(1)])
     button_combs.append(re.findall(r"\((.*?)\)", x))
     joltage_stuff.append(re.search(r"\{(.*?)\}", x).group(1))
+
+for x in range(len(goal_states)):
+    for v in range(len(goal_states[x])):
+        if goal_states[x][v] == "#":
+            goal_states[x][v] = 1
+        elif goal_states[x][v] == ".":
+            goal_states[x][v] = 0
+
 
 print("Goal States:", goal_states)
 
@@ -28,9 +37,6 @@ for i in range(len(button_combs)):
 
 # prepare GF(2) matrices
 gf2_matrices = []
-
-# convert it to binary
-goal_states = [x.replace('#', '1').replace('.', '0') for x in goal_states]
 
 for i in range(len(button_combs)):
     num_combinations = len(button_combs[i])
@@ -46,71 +52,60 @@ for i in range(len(button_combs)):
 
     gf2_matrices.append(matrix)
 
-import numpy as np
+def solve(input_matrix, target_vector):
+    rows = len(input_matrix)
+    cols = len(input_matrix[0])
 
+    col_vars = [z3.Bool(f'col_{j}') for j in range(cols)]
 
-def gauss(vectors, target):
-    A = np.array(vectors, dtype=int)
-    b = np.array(target, dtype=int)
+    opt = z3.Optimize()
 
-    n_vectors, n_dim = A.shape
+    # add constraint XOR over columns equals target
+    for i in range(rows):
+        xor_expr = None
+        for j in range(cols):
+            if input_matrix[i][j] == 1:
+                if xor_expr is None:
+                    xor_expr = z3.If(col_vars[j], z3.BoolVal(True), z3.BoolVal(False))
+                else:
+                    xor_expr = z3.Xor(xor_expr, z3.If(col_vars[j], z3.BoolVal(True), z3.BoolVal(False)))
+            else:
+                pass
+        if xor_expr is None:
+            opt.add(target_vector[i] == 0)
+        else:
+            # enforce xor equals target
+            opt.add(xor_expr == bool(target_vector[i]))
 
-    augmented = np.hstack((A, b.reshape(-1, 1)))
+    # objective: minimize the number of toggled columns
+    cost = z3.Sum([z3.If(var, 1, 0) for var in col_vars])
+    opt.minimize(cost)
 
-    # Gaussian elimination over GF(2)
-    row = 0
-    for col in range(n_dim):
-        # Find a row with a 1 in current column
-        pivot_rows = np.where(augmented[row:, col] == 1)[0]
-        if len(pivot_rows) == 0:
-            continue  # no pivot in this column
-        pivot = pivot_rows[0] + row
-        # Swap rows if needed
-        if pivot != row:
-            augmented[[row, pivot]] = augmented[[pivot, row]]
-        # Eliminate below
-        for r in range(row + 1, n_vectors):
-            if augmented[r, col] == 1:
-                augmented[r] = (augmented[r] ^ augmented[row])
-        row += 1
-        if row >= n_vectors:
-            break
-
-    # Back substitution
-    solution = np.zeros(n_vectors, dtype=int)
-    for i in reversed(range(n_vectors)):
-        # Find pivot column
-        pivot_cols = np.where(augmented[i, :n_dim] == 1)[0]
-        if len(pivot_cols) == 0:
-            continue
-        pivot_col = pivot_cols[0]
-        sum_known = 0
-        for j in range(pivot_col + 1, n_dim):
-            sum_known ^= (augmented[i, j] & solution[j])
-        solution[pivot_col] = augmented[i, -1] ^ sum_known
-
-    # Verify solution
-    result = np.zeros(n_dim, dtype=int)
-    for idx, vec in enumerate(vectors):
-        if solution[idx] == 1:
-            result ^= np.array(vec, dtype=int)
-    if np.array_equal(result, target):
-        # Return indices of vectors used
-        indices = [i for i, val in enumerate(solution) if val == 1]
-        return indices
+    # Solve
+    if opt.check() == z3.sat:
+        model = opt.model()
+        toggle_list = [1 if z3.is_true(model.evaluate(col_vars[j])) else 0 for j in range(cols)]
+        # print("Minimal toggle set (columns):", toggle_list)
+        # print("Number of toggles:", sum(toggle_list))
+        return toggle_list
     else:
-        return None
+        return -1000
 
 def solve_gf2_systems(vectors, target):
-    target = [int(bit) for bit in target]
     print(target)
     print(vectors)
 
-    for x in range(4):
-        goal = [str(v[x]) for v in vectors]
-        print('x + '.join(goal),'x = ', target[x])
+    vectors_transpose = vectors.T
+    print(vectors_transpose)
 
+    matrix = solve(vectors_transpose,target)
+    print(matrix)
+    return matrix
 
+t = 0
+for x in range(len(gf2_matrices)):
+    matrix =  solve_gf2_systems(np.array(gf2_matrices[x]), np.array(goal_states[x]))
+    t += sum(matrix)
 
-solve_gf2_systems(gf2_matrices[0], goal_states[0])
+print(t)
 # just make it work for 0 then we can keep going
