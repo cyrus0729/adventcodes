@@ -1,6 +1,7 @@
 from functools import cache
+import os
 
-txt = open(r"D:\Users\cyrus\Desktop\code stuff\cadvent2025\data.txt").readlines()
+txt = open(f"{os.getcwd()}/data.txt").readlines()
 txt = [(int(a), int(b)) for a, b in [x.strip("\n").split(",") for x in txt]] # (x,y)
 
 cols,rows = max(x[0] for x in txt), max(x[1] for x in txt) 
