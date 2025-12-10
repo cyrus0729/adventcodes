@@ -3,9 +3,9 @@ from scipy.spatial import KDTree
 import networkx as nx
 
 import matplotlib.pyplot as plt
-import iplotx as ipx
 
-txt = open(r"D:\Users\cyrus\Desktop\code stuff\cadvent2025\data.txt").readlines()
+import os
+txt = open(f"{os.getcwd()}/data.txt").readlines()
 
 data = np.array([list(map(int, line.split(','))) for line in txt])
 

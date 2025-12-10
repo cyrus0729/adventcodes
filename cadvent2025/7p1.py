@@ -1,4 +1,5 @@
-txt = open(r"D:\Users\cyrus\Desktop\code stuff\cadvent2025\data.txt").readlines()
+import os
+txt = open(f"{os.getcwd()}/data.txt").readlines()
 
 area = len(txt[0])
 currentBeams = [0 for i in range(area)]

@@ -1,4 +1,5 @@
-txt = open(r"D:\Users\cyrus\Desktop\code stuff\cadvent2025\data.txt").readline().split(',')
+import os
+txt = open(f"{os.getcwd()}/data.txt").readline().split(',')
 
 t = 0
 for x in txt:

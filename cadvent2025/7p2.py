@@ -1,11 +1,13 @@
 from functools import cache
 
-data = open(r"D:\Users\cyrus\Desktop\code stuff\cadvent2025\data.txt").readlines()
-N = len(data)
+import os
+txt = open(f"{os.getcwd()}/data.txt").readlines()
+
+N = len(txt)
 
 for r in range(N):
-    for c in range(len(data[0])-1):
-        if data[r][c] == "S":
+    for c in range(len(txt[0])-1):
+        if txt[r][c] == "S":
             sr,sc = r, c
 
 @cache

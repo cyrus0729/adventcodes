@@ -1,6 +1,7 @@
+import os
 grid = [
         [int(char) for char in line.strip("\n").replace("@", "1").replace(".", "0")]
-        for line in open(r"D:\Users\cyrus\Desktop\code stuff\cadvent2025\data.txt")
+        for line in open(f"{os.getcwd()}/data.txt")
     ] # just a map of the entire thing, 1 = roll and 0 = empty
 
 print(f"grid size: {len(grid)}, {len(grid[0])}")

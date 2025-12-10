@@ -1,4 +1,5 @@
-txt = open(r"D:\Users\cyrus\Desktop\code stuff\cadvent2025\data.txt").readlines()
+import os
+txt = open(f"{os.getcwd()}/data.txt").readlines()
 # at most 4 rows of numbers + 1 symbol
 # numbers about 1-4 digits long with proper paddding
 
