@@ -54,9 +54,30 @@ print(np.apply_along_axis(fillRow,axis=1,arr=bit_array))
 filled_array = binary_fill_holes(bit_array).astype(int)
 # maybe this will work?
 	
+current_score = 0
     
 for p1 in txt:
     for p2 in txt:
+      
+      sx, sy = min(p1[0],p2[0]), min(p1[1],p2[1])
+      mx,my = max(p1[0],p2[0]), max(p1[1],p2[1])
+      area = (mx-sx)*(my-sy)
+      if area <= current_score:
+         continue
+      
+      bit_array2 = np.zeros((rows,cols), dtype=np.uint8)
+      
+      for row in range(sy,my):
+         for col in range(sx,mx):
+            bit_array2[row, col] = 1
+      res_arr = np.bitwise_xor(bit_array,bit_array2)
+      
+      if np.any(res_arr == 1):
+         continue
+      if area > current_score:
+         current_score = area
+            
+      
         # draw rectangle on seperate array
         # bitwise and and check if any one is zero between the points?
         
